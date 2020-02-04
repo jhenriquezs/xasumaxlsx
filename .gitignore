@@ -1,3 +1,6 @@
 .idea
 /osuvenv
 /__pycache__
+/build
+/dist
+app_gui.spec
