@@ -1,7 +1,8 @@
 import json, requests, time, sys
 
+# get all "ranked" beatmaps from the base date, every request have a limit of 500 beatmaps/s
 def get_beatmaps(mode, key, filename, mods, conv, json_value, folder_path):
-    base_date = '2020-01-31 17:46:31'
+    base_date = '2000-01-01 17:46:31'
     converted = ""
     if (conv):
         converted = '&a=1'
@@ -18,6 +19,7 @@ def get_beatmaps(mode, key, filename, mods, conv, json_value, folder_path):
         last_map = data[-1]
         time.sleep(1)
         data = requests.get("https://osu.ppy.sh/api/get_beatmaps?k="+ key +"&since="+ last_map['approved_date'] +"&m="+str(mode)+"&limit=500"+converted).json()
+        # check if the last beatmap of the previous request is inside in the new request(this helps to calculate the offset)
         if (data[0]['approved_date'] == last_map['approved_date']):
             fecha = last_map['approved_date']
             cont = 0
@@ -37,6 +39,7 @@ def get_beatmaps(mode, key, filename, mods, conv, json_value, folder_path):
     print("beatmaps en total: "+ str(len(beatmaps_total)))
     return beatmaps_total
 
+# get the scores from all the beatmaps, every request is 100 scores/s and 1s per beatmap
 def get_scores(beatmaps_dict, key, mode, json_value, filename, no_mod, folder_path):
     tipo = "Top_"
     mods = ""
@@ -54,8 +57,6 @@ def get_scores(beatmaps_dict, key, mode, json_value, filename, no_mod, folder_pa
         else:
             if (len(score) < 8):
                 refresh(beatmap, tipo, [score[0]])
-                #beatmap.update({tipo+'score': score[0]["score"], tipo+'username': score[0]["username"], tipo+'user_id': score[0]["user_id"],
-                #                tipo+'maxcombo': score[0]["maxcombo"], tipo+'date': score[0]["date"], tipo+'rank': score[0]["rank"]})
             elif (8 <= len(score) < 25):
                 refresh(beatmap, tipo ,[score[0], score[7]])
             elif (25 <= len(score) < 50):

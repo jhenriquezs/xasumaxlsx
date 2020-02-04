@@ -42,6 +42,17 @@ def execution(modo, api, name, nomod, top, converts, json, folder):
     if (nomod):
         beatmaps = get_scores(beatmaps, api, modo, json, name.replace(".", ""), True, folder)
     df = pd.DataFrame.from_records(beatmaps)
+    df = df.rename(columns={'approved':'rank_status', 'file_md5': 'hash', 'diff_size': 'CS', 'diff_overall': 'OD',
+                       'diff_approach': 'AR', 'diff_drain': 'HP'})
+    df = df.replace({'rank_status': {'4':'loved', '3':'qualified', '2':'approved', '1':'ranked','0':'pending', '-1':'WIP',
+                                '-2':'graveyard'},
+                'mode': {'0': 'osu!', '1': 'taiko', '2': 'CtB', '3': 'osu!mania'},
+                'genre_id': {'0': 'any', '1': 'unspecified', '2': 'video game', '3': 'anime', '4': 'rock', '5': 'pop',
+                             '6': 'other', '7': 'novelty', '9': 'hip hop', '10': 'electronic'},
+                'language_id': {'0': 'any', '1': 'other', '2': 'english', '3': 'japanese', '4': 'chinese',
+                                '5': 'instrumental', '6': 'korean', '7': 'french', '8': 'german', '9': 'swedish',
+                                '10': 'spanish', '11': 'italian'}
+                })
     for col in df.columns:
         df[col] = df[col].map(lambda x: str(x).replace('=', "__"))
     df.to_excel(folder + '/' + name.replace(".", "") + ".xlsx", sheet_name='Sheet1', index=False, engine='openpyxl')
