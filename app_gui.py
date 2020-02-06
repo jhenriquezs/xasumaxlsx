@@ -2,9 +2,10 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import ttk
-from beatmaps_02 import get_beatmaps, get_scores
+from beatmaps_02 import get_beatmaps, get_scores, open_json
 import pandas as pd
-import threading
+import threading, sys, os, json
+
 
 class IORedirector(object):
     '''A general class for redirecting I/O to this Text widget.'''
@@ -15,16 +16,19 @@ class StdoutRedirector(IORedirector):
     '''A class for redirecting stdout to this Text widget.'''
     def write(self,str):
         self.text_area.insert("end", str)
+        self.text_area.see("end")
     def flush(self):
         pass
 
 def redirector(inputStr=""):
-    import sys
     root = Toplevel()
-    T = Text(root)
+    yscrollbar = Scrollbar(root)
+    yscrollbar.pack(side=RIGHT, fill=Y)
+    T = Text(root, wrap=NONE, yscrollcommand=yscrollbar.set)
     sys.stdout = StdoutRedirector(T)
     T.pack()
     T.insert(END, inputStr)
+    yscrollbar.config(command=T.yview)
 
 root = Tk()
 root.geometry("700x400")
@@ -33,6 +37,13 @@ root.title("osuScores")
 root.grid_rowconfigure(10, weight=1)
 root.grid_columnconfigure(10, weight=1)
 
+def mode_label(row):
+    link = "https://osu.ppy.sh/beatmapsets/" + row["beatmapset_id"] + "#"+row["mode"]+"/" + row["beatmap_id"]
+    if row['mode'] == "CtB":
+        link = "https://osu.ppy.sh/beatmapsets/" + row["beatmapset_id"] + "#fruits/" + row["beatmap_id"]
+    if row['mode'] == "osu!mania":
+        link = "https://osu.ppy.sh/beatmapsets/" + row["beatmapset_id"] + "#mania/" + row["beatmap_id"]
+    return '=HYPERLINK("%s", "%s")' % (link, "Link")
 
 def execution(modo, api, name, nomod, top, converts, json, folder):
     redict = redirector()
@@ -55,6 +66,7 @@ def execution(modo, api, name, nomod, top, converts, json, folder):
                 })
     for col in df.columns:
         df[col] = df[col].map(lambda x: str(x).replace('=', "__"))
+    df["hyperlink"] = df.apply(lambda row: mode_label(row), axis=1)
     df.to_excel(folder + '/' + name.replace(".", "") + ".xlsx", sheet_name='Sheet1', index=False, engine='openpyxl')
     messagebox.showinfo("Exito", "Se ha realizado la operacion con exito")
     sendButton.config(state=ACTIVE)
@@ -67,13 +79,18 @@ def myClick():
     modo = selection.get()
     top = top_score.get()
     nomod = top_nomod.get()
-    json = create_json.get()
+    json_value = create_json.get()
     converts = converted.get()
     if (name == "" or folder == "" or api == ""):
         messagebox.showinfo("Faltan datos", "Faltan datos por completar")
     else:
         try:
-            thread = threading.Thread(target=execution, args=(modo, api, name, nomod, top, converts, json, folder))
+            dir = os.getcwd() + '\\api.json'
+            data = {}
+            data['api'] = api
+            with open(dir, 'w') as json_file:
+                json.dump(data, json_file)
+            thread = threading.Thread(target=execution, args=(modo, api, name, nomod, top, converts, json_value, folder))
             thread.start()
         except Exception as e:
             messagebox.showinfo("Error", "Wrong API key!!!!!")
@@ -93,6 +110,11 @@ def turn_off():
 def turn_on():
     convertedBox.config(state=ACTIVE)
 
+api_key = ""
+try:
+    api_key = open_json("api.json")["api"]
+except:
+    pass
 # Labels & Entries
     #Filename Block
 file_label = Label(root, text="Ingrese el nombre del archivo: ", width=25).grid(row=0,column=0)
@@ -102,6 +124,7 @@ filename.grid(row=0,column=1, columnspan=2, sticky=W+E, pady=5)
     #API Block
 api_key_label = Label(root, text="Ingrese API key:", width=25).grid(row=1,column=0)
 entryBox = Entry(root)
+entryBox.insert(0, api_key)
 entryBox.grid(row=1,column=1, columnspan=2, sticky=W+E, pady=5)
 
     #SearchFolder Block

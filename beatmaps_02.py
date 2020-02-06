@@ -2,7 +2,7 @@ import json, requests, time, sys
 
 # get all "ranked" beatmaps from the base date, every request have a limit of 500 beatmaps/s
 def get_beatmaps(mode, key, filename, mods, conv, json_value, folder_path):
-    base_date = '2000-01-01 17:46:31'
+    base_date = '2000-02-04 17:46:31'
     converted = ""
     if (conv):
         converted = '&a=1'
@@ -46,6 +46,7 @@ def get_scores(beatmaps_dict, key, mode, json_value, filename, no_mod, folder_pa
     if (no_mod):
         mods = "&mods=(0|16384)"
         tipo = "No_Mod_"
+    contador = 0
     for beatmap in beatmaps_dict:
         time.sleep(1)
         id = beatmap['beatmap_id']
@@ -65,31 +66,29 @@ def get_scores(beatmaps_dict, key, mode, json_value, filename, no_mod, folder_pa
                 refresh(beatmap, tipo ,[score[0], score[7], score[24], score[49]])
             else:
                 refresh(beatmap, tipo ,[score[0], score[7], score[24], score[49], score[99]])
-        if ((beatmaps_dict.index(beatmap)+1)%500 == 0):
-            print("500 beatmaps se han actualizado")
+        contador += 1
+        if (contador%500 == 0):
+            print("beatmaps actualizados: " + str(contador))
     if (json_value):
         create_json(beatmaps_dict, folder_path +'/'+filename+'.json')
     return beatmaps_dict
 
 def refresh(beatmap, tipo ,scores):
-    if (tipo == "No_Mod_"):
-        beatmap.update({tipo + 'score': scores[0]["score"], tipo + 'username': scores[0]["username"],
-                        tipo + 'user_id': scores[0]["user_id"],
-                        tipo + 'maxcombo': scores[0]["maxcombo"], tipo + 'date': scores[0]["date"],
-                        tipo + 'rank': scores[0]["rank"]})
-    else:
-        rank = ["","8","25","50","100"]
-        contador = 0
-        for puntuacion in scores:
-            combo = "NO"
-            if (beatmap["max_combo"] == puntuacion["maxcombo"]):
-                combo = "YES"
-            beatmap.update({tipo + rank[contador] + 'score': puntuacion["score"], tipo + rank[contador] +'username': puntuacion["username"],
-                            tipo + rank[contador] +'user_id': puntuacion["user_id"],
-                            tipo + rank[contador] +'maxcombo': puntuacion["maxcombo"], tipo + rank[contador] +'date': puntuacion["date"],
-                            tipo + rank[contador] +'rank': puntuacion["rank"], tipo + rank[contador] +'pp': puntuacion["pp"],
-                            tipo + rank[contador] + 'FC?': combo})
-            contador+=1
+    rank = ["", "8", "25", "50", "100"]
+    contador = 0
+    for puntuacion in scores:
+        combo = "NO"
+        if (beatmap["max_combo"] == puntuacion["maxcombo"]):
+            combo = "YES"
+        beatmap.update({tipo + rank[contador] + 'score': puntuacion["score"],
+                        tipo + rank[contador] + 'username': puntuacion["username"],
+                        tipo + rank[contador] + 'user_id': puntuacion["user_id"],
+                        tipo + rank[contador] + 'maxcombo': puntuacion["maxcombo"],
+                        tipo + rank[contador] + 'date': puntuacion["date"],
+                        tipo + rank[contador] + 'rank': puntuacion["rank"],
+                        tipo + rank[contador] + 'pp': puntuacion["pp"],
+                        tipo + rank[contador] + 'FC?': combo})
+        contador += 1
 
 def create_json(data, filename):
     with open(filename, 'w') as json_file:
