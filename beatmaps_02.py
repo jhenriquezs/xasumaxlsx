@@ -3,7 +3,7 @@ import db_util as dbu
 
 # get all "ranked" beatmaps from the base date, every request have a limit of 500 beatmaps/s
 def get_beatmaps(mode, key, conv, conn):
-    base_date = '2020-02-18 17:46:31'
+    base_date = '2000-02-18 17:46:31'
     converted = ""
     if (conv):
         converted = '&a=1'

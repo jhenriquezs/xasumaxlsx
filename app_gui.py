@@ -77,6 +77,8 @@ def execution(modo, api, name, nomod, top, converts, json, folder, db, update, h
         df[col] = df[col].map(lambda x: str(x).replace('=', "__"))
     if (hyperlink):
         df["hyperlink"] = df.apply(lambda row: mode_label(row), axis=1)
+        columnas = list(df.columns)
+        df = df[columnas[:1]+columnas[-1:]+columnas[1:-1]]
     print("Generando Excel")
     df.to_excel(folder + '/' + name.replace(".", "") + ".xlsx", sheet_name='Sheet1', index=False, engine='openpyxl')
     if (json):
